@@ -185,7 +185,7 @@ selectUrl url status =
 initialCmd : Cmd Msg
 initialCmd =
     Http.get
-        { url = "http://elm-in-action.com/photos/list"
+        { url = "http://elm-in-action.com/photos/list.json"
         , expect = Http.expectJson GotPhotos (list photoDecoder)
         }
 
