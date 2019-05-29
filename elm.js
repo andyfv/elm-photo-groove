@@ -6018,7 +6018,7 @@ var author$project$PhotoGroove$initialCmd = elm$http$Http$get(
 	});
 var author$project$PhotoGroove$Loading = {$: 'Loading'};
 var author$project$PhotoGroove$Medium = {$: 'Medium'};
-var author$project$PhotoGroove$initialModel = {chosenSize: author$project$PhotoGroove$Medium, status: author$project$PhotoGroove$Loading};
+var author$project$PhotoGroove$initialModel = {chosenSize: author$project$PhotoGroove$Medium, hue: 5, noise: 5, ripple: 5, status: author$project$PhotoGroove$Loading};
 var author$project$PhotoGroove$Errored = function (a) {
 	return {$: 'Errored', a: a};
 };
@@ -6299,12 +6299,11 @@ var author$project$PhotoGroove$update = F2(
 							status: A2(author$project$PhotoGroove$selectUrl, photo.url, model.status)
 						}),
 					elm$core$Platform$Cmd$none);
-			default:
+			case 'GotPhotos':
 				if (msg.a.$ === 'Ok') {
 					var photos = msg.a.a;
 					if (photos.b) {
 						var first = photos.a;
-						var rest = photos.b;
 						return _Utils_Tuple2(
 							_Utils_update(
 								model,
@@ -6330,10 +6329,40 @@ var author$project$PhotoGroove$update = F2(
 							}),
 						elm$core$Platform$Cmd$none);
 				}
+			case 'SlideHue':
+				var hue = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{hue: hue}),
+					elm$core$Platform$Cmd$none);
+			case 'SlideRipple':
+				var ripple = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{ripple: ripple}),
+					elm$core$Platform$Cmd$none);
+			default:
+				var noise = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{noise: noise}),
+					elm$core$Platform$Cmd$none);
 		}
 	});
 var author$project$PhotoGroove$ClickedSurpriseMe = {$: 'ClickedSurpriseMe'};
 var author$project$PhotoGroove$Large = {$: 'Large'};
+var author$project$PhotoGroove$SlideHue = function (a) {
+	return {$: 'SlideHue', a: a};
+};
+var author$project$PhotoGroove$SlideNoise = function (a) {
+	return {$: 'SlideNoise', a: a};
+};
+var author$project$PhotoGroove$SlideRipple = function (a) {
+	return {$: 'SlideRipple', a: a};
+};
 var author$project$PhotoGroove$Small = {$: 'Small'};
 var author$project$PhotoGroove$sizeToString = function (size) {
 	switch (size.$) {
@@ -6346,6 +6375,9 @@ var author$project$PhotoGroove$sizeToString = function (size) {
 	}
 };
 var author$project$PhotoGroove$urlPrefix = 'http://elm-in-action.com/';
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 	switch (handler.$) {
@@ -6358,6 +6390,31 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 		default:
 			return 3;
 	}
+};
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3(elm$core$List$foldr, elm$json$Json$Decode$field, decoder, fields);
+	});
+var author$project$PhotoGroove$onSlide = function (toMsg) {
+	return A2(
+		elm$html$Html$Events$on,
+		'slide',
+		A2(
+			elm$json$Json$Decode$map,
+			toMsg,
+			A2(
+				elm$json$Json$Decode$at,
+				_List_fromArray(
+					['detail', 'userSlideTo']),
+				elm$json$Json$Decode$int)));
 };
 var elm$virtual_dom$VirtualDom$node = function (tag) {
 	return _VirtualDom_node(
@@ -6391,8 +6448,8 @@ var elm$virtual_dom$VirtualDom$property = F2(
 	});
 var elm$html$Html$Attributes$property = elm$virtual_dom$VirtualDom$property;
 var elm$json$Json$Encode$int = _Json_wrap;
-var author$project$PhotoGroove$viewFilter = F2(
-	function (name, magnitude) {
+var author$project$PhotoGroove$viewFilter = F3(
+	function (toMsg, name, magnitude) {
 		return A2(
 			elm$html$Html$div,
 			_List_fromArray(
@@ -6416,7 +6473,8 @@ var author$project$PhotoGroove$viewFilter = F2(
 							A2(
 							elm$html$Html$Attributes$property,
 							'val',
-							elm$json$Json$Encode$int(magnitude))
+							elm$json$Json$Encode$int(magnitude)),
+							author$project$PhotoGroove$onSlide(toMsg)
 						]),
 					_List_Nil),
 					A2(
@@ -6435,17 +6493,6 @@ var author$project$PhotoGroove$ClickedSize = function (a) {
 var elm$html$Html$input = _VirtualDom_node('input');
 var elm$html$Html$Attributes$name = elm$html$Html$Attributes$stringProperty('name');
 var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
-var elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
 var elm$html$Html$Events$onClick = function (msg) {
 	return A2(
 		elm$html$Html$Events$on,
@@ -6535,7 +6582,7 @@ var elm$html$Html$h1 = _VirtualDom_node('h1');
 var elm$html$Html$h3 = _VirtualDom_node('h3');
 var elm$html$Html$Attributes$id = elm$html$Html$Attributes$stringProperty('id');
 var author$project$PhotoGroove$viewLoaded = F3(
-	function (photos, selectedUrl, chosenSize) {
+	function (photos, selectedUrl, model) {
 		return _List_fromArray(
 			[
 				A2(
@@ -6563,9 +6610,9 @@ var author$project$PhotoGroove$viewLoaded = F3(
 					]),
 				_List_fromArray(
 					[
-						A2(author$project$PhotoGroove$viewFilter, 'Hue', 0),
-						A2(author$project$PhotoGroove$viewFilter, 'Ripple', 0),
-						A2(author$project$PhotoGroove$viewFilter, 'Noise', 0)
+						A3(author$project$PhotoGroove$viewFilter, author$project$PhotoGroove$SlideHue, 'Hue', model.hue),
+						A3(author$project$PhotoGroove$viewFilter, author$project$PhotoGroove$SlideRipple, 'Ripple', model.ripple),
+						A3(author$project$PhotoGroove$viewFilter, author$project$PhotoGroove$SlideNoise, 'Noise', model.noise)
 					])),
 				A2(
 				elm$html$Html$h3,
@@ -6591,7 +6638,7 @@ var author$project$PhotoGroove$viewLoaded = F3(
 					[
 						elm$html$Html$Attributes$id('thumbnails'),
 						elm$html$Html$Attributes$class(
-						author$project$PhotoGroove$sizeToString(chosenSize))
+						author$project$PhotoGroove$sizeToString(model.chosenSize))
 					]),
 				A2(
 					elm$core$List$map,
@@ -6620,7 +6667,7 @@ var author$project$PhotoGroove$view = function (model) {
 				case 'Loaded':
 					var photos = _n0.a;
 					var selectedUrl = _n0.b;
-					return A3(author$project$PhotoGroove$viewLoaded, photos, selectedUrl, model.chosenSize);
+					return A3(author$project$PhotoGroove$viewLoaded, photos, selectedUrl, model);
 				case 'Loading':
 					return _List_Nil;
 				default:
