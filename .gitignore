@@ -1,5 +1,4 @@
 # Ignore the the following files and folders 
 
 .idea/
-elm-stuff/0.19.0/PhotoGroove.elmi
-elm-stuff/0.19.0/PhotoGroove.elmo
+elm-stuff/
