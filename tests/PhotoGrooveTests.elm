@@ -1,11 +1,25 @@
-module PhotoGrooveTests exposing (decoderTest, sliders)
+module PhotoGrooveTests exposing (clickThumbnail, decoderTest, sliders, thumbnailsWork)
 
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
+import Html.Attributes as Attr exposing (src)
 import Json.Decode as Decode exposing (decodeValue)
 import Json.Encode as Encode
-import PhotoGroove exposing (Model, Msg(..), Photo, initialModel, update)
+import PhotoGroove
+    exposing
+        ( Model
+        , Msg(..)
+        , Photo
+        , Status(..)
+        , initialModel
+        , update
+        , urlPrefix
+        , view
+        )
 import Test exposing (..)
+import Test.Html.Event as Event
+import Test.Html.Query as Query
+import Test.Html.Selector exposing (attribute, tag, text)
 
 
 decoderTest : Test
@@ -39,3 +53,13 @@ testSlider description toMsg amountFromModel =
                 |> Tuple.first
                 |> amountFromModel
                 |> Expect.equal amount
+
+noPhotosNoThumbnails : Test
+noPhotosNoThumbnails =
+    test "No thumbnails render when there are no photos to render." <|
+        \_ ->
+            initialModel
+                |> PhotoGroove.view
+                |> Query.fromHtml
+                |> Query.findAll [ tag "img" ]
+                |> Query.count (Expect.equal 0)

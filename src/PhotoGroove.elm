@@ -1,4 +1,4 @@
-port module PhotoGroove exposing (FilterOptions, Model, Msg(..), Photo, Status(..), ThumbnailSize(..), initialCmd, initialModel, main, onSlide, photoDecoder, rangeSlider, selectUrl, sizeToString, update, urlPrefix, view, viewFilter, viewLoaded, viewSizeChooser, viewThumbnail)
+port module PhotoGroove exposing (Model, Msg(..), Photo, Status(..), initialModel, main, photoDecoder, update, urlPrefix, view)
 
 import Browser
 import Html exposing (..)
