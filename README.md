@@ -41,4 +41,6 @@ larger version of it
 
 ## Dependencies
 
-*None*
+- Elm 0.19
+- [JSR](https://github.com/soanvig/jsr) - used for the filter sliders 
+- [JSManipulate](https://github.com/bennyschudel/JSManipulate) v1.0 *(pasta.js in the code)* - used for the filter functionality
