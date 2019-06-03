@@ -11,131 +11,35 @@ import Json.Encode as Encode
 import Random
 
 
-urlPrefix : String
-urlPrefix =
-    "http://elm-in-action.com/"
+
+-- MAIN
 
 
-type Msg
-    = ClickedPhoto String
-    | ClickedSize ThumbnailSize
-    | ClickedSurpriseMe
-    | GotRandomPhoto Photo
-    | GotActivity String
-    | GotPhotos (Result Http.Error (List Photo))
-    | SlideHue Int
-    | SlideRipple Int
-    | SlideNoise Int
+main : Program Float Model Msg
+main =
+    Browser.element
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = \_ -> activityChanges GotActivity
+        }
 
 
-view : Model -> Html Msg
-view model =
-    div [ class "content" ] <|
-        case model.status of
-            Loaded photos selectedUrl ->
-                viewLoaded photos selectedUrl model
-
-            Loading ->
-                []
-
-            Errored errorMessage ->
-                [ text ("Error: " ++ errorMessage) ]
+init : Float -> ( Model, Cmd Msg )
+init flags =
+    let
+        activity =
+            "Initializing Pasta v" ++ String.fromFloat flags
+    in
+    ( { initialModel | activity = activity }, initialCmd )
 
 
-viewFilter : (Int -> Msg) -> String -> Int -> Html Msg
-viewFilter toMsg name magnitude =
-    div [ class "filter-slider" ]
-        [ label [] [ text name ]
-        , rangeSlider
-            [ Attr.max "11"
-            , Attr.property "val" (Encode.int magnitude)
-            , onSlide toMsg
-            ]
-            []
-        , label [] [ text (String.fromInt magnitude) ]
-        ]
-
-
-viewLoaded : List Photo -> String -> Model -> List (Html Msg)
-viewLoaded photos selectedUrl model =
-    [ h1 [] [ text "Photo Groove" ]
-    , button
-        [ onClick ClickedSurpriseMe ]
-        [ text "Surprise Me!" ]
-    , div [ class "activity" ] [ text model.activity ]
-    , div [ class "filters" ]
-        [ viewFilter SlideHue "Hue" model.hue
-        , viewFilter SlideRipple "Ripple" model.ripple
-        , viewFilter SlideNoise "Noise" model.noise
-        ]
-    , h3 [] [ text "Thumbnail Size: " ]
-    , div [ id "choose-size" ]
-        (List.map viewSizeChooser [ Small, Medium, Large ])
-    , div [ id "thumbnails", class (sizeToString model.chosenSize) ]
-        (List.map (viewThumbnail selectedUrl) photos)
-    , canvas
-        [ id "main-canvas"
-        , class "large"
-        ]
-        []
-    ]
-
-
-viewThumbnail : String -> Photo -> Html Msg
-viewThumbnail selectedUrl thumb =
-    img
-        [ src (urlPrefix ++ thumb.url)
-        , title (thumb.title ++ " [" ++ String.fromInt thumb.size ++ " KB]")
-        , classList [ ( "selected", selectedUrl == thumb.url ) ]
-        , onClick (ClickedPhoto thumb.url)
-        ]
-        []
-
-
-viewSizeChooser : ThumbnailSize -> Html Msg
-viewSizeChooser size =
-    label []
-        [ input [ type_ "radio", name "size", onClick (ClickedSize size) ] []
-        , text (sizeToString size)
-        ]
-
-
-sizeToString : ThumbnailSize -> String
-sizeToString size =
-    case size of
-        Small ->
-            "small"
-
-        Medium ->
-            "med"
-
-        Large ->
-            "large"
-
-
-type ThumbnailSize
-    = Small
-    | Medium
-    | Large
-
-
-port setFilters : FilterOptions -> Cmd msg
-
-
-port activityChanges : (String -> msg) -> Sub msg
-
-
-type alias FilterOptions =
-    { url : String
-    , filters : List { name : String, amount : Float }
-    }
-
-
-type alias Photo =
-    { url : String
-    , size : Int
-    , title : String
-    }
+initialCmd : Cmd Msg
+initialCmd =
+    Http.get
+        { url = "http://elm-in-action.com/photos/list.json"
+        , expect = Http.expectJson GotPhotos (list photoDecoder)
+        }
 
 
 photoDecoder : Decoder Photo
@@ -146,10 +50,13 @@ photoDecoder =
         |> optional "title" string "(untitled)"
 
 
-type Status
-    = Loading
-    | Loaded (List Photo) String
-    | Errored String
+urlPrefix : String
+urlPrefix =
+    "http://elm-in-action.com/"
+
+
+
+-- MODEL
 
 
 type alias Model =
@@ -171,6 +78,35 @@ initialModel =
     , ripple = 5
     , noise = 5
     }
+
+
+type Status
+    = Loading
+    | Loaded (List Photo) String
+    | Errored String
+
+
+type alias Photo =
+    { url : String
+    , size : Int
+    , title : String
+    }
+
+
+
+-- UPDATE
+
+
+type Msg
+    = ClickedPhoto String
+    | ClickedSize ThumbnailSize
+    | ClickedSurpriseMe
+    | GotRandomPhoto Photo
+    | GotActivity String
+    | GotPhotos (Result Http.Error (List Photo))
+    | SlideHue Int
+    | SlideRipple Int
+    | SlideNoise Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -253,6 +189,15 @@ applyFilters model =
             ( model, Cmd.none )
 
 
+type alias FilterOptions =
+    { url : String
+    , filters : List { name : String, amount : Float }
+    }
+
+
+port setFilters : FilterOptions -> Cmd msg
+
+
 selectUrl : String -> Status -> Status
 selectUrl url status =
     case status of
@@ -266,33 +211,6 @@ selectUrl url status =
             status
 
 
-initialCmd : Cmd Msg
-initialCmd =
-    Http.get
-        { url = "http://elm-in-action.com/photos/list.json"
-        , expect = Http.expectJson GotPhotos (list photoDecoder)
-        }
-
-
-main : Program Float Model Msg
-main =
-    Browser.element
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = \_ -> activityChanges GotActivity
-        }
-
-
-init : Float -> ( Model, Cmd Msg )
-init flags =
-    let
-        activity =
-            "Initializing Pasta v" ++ String.fromFloat flags
-    in
-    ( { initialModel | activity = activity }, initialCmd )
-
-
 rangeSlider : List (Attribute msg) -> List (Html msg) -> Html msg
 rangeSlider attributes children =
     node "range-slider" attributes children
@@ -303,3 +221,105 @@ onSlide toMsg =
     at [ "detail", "userSlideTo" ] int
         |> Json.Decode.map toMsg
         |> on "slide"
+
+
+
+-- SUBSCRIPTIONS
+
+
+port activityChanges : (String -> msg) -> Sub msg
+
+
+
+-- VIEW
+
+
+view : Model -> Html Msg
+view model =
+    div [ class "content" ] <|
+        case model.status of
+            Loaded photos selectedUrl ->
+                viewLoaded photos selectedUrl model
+
+            Loading ->
+                []
+
+            Errored errorMessage ->
+                [ text ("Error: " ++ errorMessage) ]
+
+
+viewFilter : (Int -> Msg) -> String -> Int -> Html Msg
+viewFilter toMsg name magnitude =
+    div [ class "filter-slider" ]
+        [ label [] [ text name ]
+        , rangeSlider
+            [ Attr.max "11"
+            , Attr.property "val" (Encode.int magnitude)
+            , onSlide toMsg
+            ]
+            []
+        , label [] [ text (String.fromInt magnitude) ]
+        ]
+
+
+viewLoaded : List Photo -> String -> Model -> List (Html Msg)
+viewLoaded photos selectedUrl model =
+    [ h1 [] [ text "Photo Groove" ]
+    , button
+        [ onClick ClickedSurpriseMe ]
+        [ text "Surprise Me!" ]
+    , div [ class "activity" ] [ text model.activity ]
+    , div [ class "filters" ]
+        [ viewFilter SlideHue "Hue" model.hue
+        , viewFilter SlideRipple "Ripple" model.ripple
+        , viewFilter SlideNoise "Noise" model.noise
+        ]
+    , h3 [] [ text "Thumbnail Size: " ]
+    , div [ id "choose-size" ]
+        (List.map viewSizeChooser [ Small, Medium, Large ])
+    , div [ id "thumbnails", class (sizeToString model.chosenSize) ]
+        (List.map (viewThumbnail selectedUrl) photos)
+    , canvas
+        [ id "main-canvas"
+        , class "large"
+        ]
+        []
+    ]
+
+
+viewThumbnail : String -> Photo -> Html Msg
+viewThumbnail selectedUrl thumb =
+    img
+        [ src (urlPrefix ++ thumb.url)
+        , title (thumb.title ++ " [" ++ String.fromInt thumb.size ++ " KB]")
+        , classList [ ( "selected", selectedUrl == thumb.url ) ]
+        , onClick (ClickedPhoto thumb.url)
+        ]
+        []
+
+
+viewSizeChooser : ThumbnailSize -> Html Msg
+viewSizeChooser size =
+    label []
+        [ input [ type_ "radio", name "size", onClick (ClickedSize size) ] []
+        , text (sizeToString size)
+        ]
+
+
+type ThumbnailSize
+    = Small
+    | Medium
+    | Large
+
+
+sizeToString : ThumbnailSize -> String
+sizeToString size =
+    case size of
+        Small ->
+            "small"
+
+        Medium ->
+            "med"
+
+        Large ->
+            "large"
